@@ -1,5 +1,5 @@
 import { useDispatch } from 'react-redux';
-import { deleteTask, toggleCompleted } from 'redux/tasksSlice';
+import { deleteTask, toggleCompleted } from 'redux/operations';
 import { MdClose } from 'react-icons/md';
 import css from './Task.module.css';
 
@@ -11,7 +11,7 @@ export const Task = ({ task }) => {
   }
 
   function handleToggle() {
-    dispatch(toggleCompleted(task.id));
+    dispatch(toggleCompleted(task));
   }
 
   return (

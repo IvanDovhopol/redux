@@ -1,49 +1,89 @@
-import { createSlice, nanoid } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import { fetchTasks, addTask, deleteTask, toggleCompleted } from './operations';
+import toast from 'react-hot-toast';
 
-const initialState = [
-  { id: 0, text: 'Learn HTML and CSS', completed: true },
-  { id: 1, text: 'Get good at JavaScript', completed: true },
-  { id: 2, text: 'Master React', completed: false },
-  { id: 3, text: 'Discover Redux', completed: false },
-  { id: 4, text: 'Build amazing apps', completed: false },
-];
+function handlePanding(state) {
+  state.isLoading = true;
+}
+
+function handleRejected(state, action) {
+  state.isLoading = false;
+  state.error = action.payload;
+}
 
 export const tasksSlice = createSlice({
   name: 'tasks',
-  initialState,
-  reducers: {
-    addTask: {
-      reducer(state, action) {
-        state.push(action.payload);
-      },
-      prepare(text) {
-        return {
-          payload: {
-            text,
-            id: nanoid(),
-            completed: false,
-          },
-        };
-      },
+  initialState: {
+    items: [],
+    isLoading: false,
+    error: null,
+  },
+  extraReducers: {
+    [fetchTasks.pending]: handlePanding,
+    [fetchTasks.rejected]: handleRejected,
+    //
+    [addTask.pending]: handlePanding,
+    [addTask.rejected]: handleRejected,
+    //
+    [deleteTask.pending]: handlePanding,
+    [deleteTask.rejected]: handleRejected,
+    //
+    [toggleCompleted.pending]: handlePanding,
+    [toggleCompleted.rejected]: handleRejected,
+    //
+    [fetchTasks.fulfilled](state, action) {
+      state.isLoading = false;
+      state.items = action.payload;
+      state.error = null;
     },
-    deleteTask: {
-      reducer(state, action) {
-        const index = state.findIndex(task => task.id === action.payload);
-        state.splice(index, 1);
-      },
+    [addTask.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      state.items.push(action.payload);
+      addToast();
     },
-    toggleCompleted: {
-      reducer(state, action) {
-        for (const task of state) {
-          if (task.id === action.payload) {
-            task.completed = !task.completed;
-            break;
-          }
-        }
-      },
+    [deleteTask.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      const index = state.items.findIndex(
+        task => task.id === action.payload.id
+      );
+      state.items.splice(index, 1);
+      deletedToast();
+    },
+    [toggleCompleted.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      const index = state.items.findIndex(
+        task => task.id === action.payload.id
+      );
+      state.items.splice(index, 1, action.payload);
     },
   },
 });
 
-export const { addTask, deleteTask, toggleCompleted } = tasksSlice.actions;
 export const tasksReducer = tasksSlice.reducer;
+
+function addToast() {
+  return toast.success(`Task successfully added!`, {
+    style: {
+      border: '1px solid green',
+      padding: '16px',
+      color: 'green',
+    },
+  });
+}
+
+function deletedToast() {
+  return toast.success('Task deleted!', {
+    style: {
+      border: '1px solid #713200',
+      padding: '16px',
+      color: '#713200',
+    },
+    iconTheme: {
+      primary: '#713200',
+      secondary: '#FFFAEE',
+    },
+  });
+}
