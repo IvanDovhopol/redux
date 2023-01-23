@@ -1,13 +1,13 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from 'components/Button/Button';
 import { addTask } from 'redux/operations';
-import { getError, getIsLoading } from 'redux/selectors';
+import { selectError, selectIsLoading } from 'redux/selectors';
 import css from './TaskForm.module.css';
 
 export const TaskForm = () => {
   const dispatch = useDispatch();
-  const isLoading = useSelector(getIsLoading);
-  const error = useSelector(getError);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
 
   const handleSubmit = event => {
     event.preventDefault();

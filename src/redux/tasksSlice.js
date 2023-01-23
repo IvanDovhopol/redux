@@ -1,15 +1,9 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, isAnyOf } from '@reduxjs/toolkit';
 import { fetchTasks, addTask, deleteTask, toggleCompleted } from './operations';
-import toast from 'react-hot-toast';
+import * as reducer from './reducers';
 
-function handlePanding(state) {
-  state.isLoading = true;
-}
-
-function handleRejected(state, action) {
-  state.isLoading = false;
-  state.error = action.payload;
-}
+const extraActions = [fetchTasks, addTask, deleteTask, toggleCompleted];
+const getActions = type => extraActions.map(action => action[type]);
 
 export const tasksSlice = createSlice({
   name: 'tasks',
@@ -18,72 +12,16 @@ export const tasksSlice = createSlice({
     isLoading: false,
     error: null,
   },
-  extraReducers: {
-    [fetchTasks.pending]: handlePanding,
-    [fetchTasks.rejected]: handleRejected,
-    //
-    [addTask.pending]: handlePanding,
-    [addTask.rejected]: handleRejected,
-    //
-    [deleteTask.pending]: handlePanding,
-    [deleteTask.rejected]: handleRejected,
-    //
-    [toggleCompleted.pending]: handlePanding,
-    [toggleCompleted.rejected]: handleRejected,
-    //
-    [fetchTasks.fulfilled](state, action) {
-      state.isLoading = false;
-      state.items = action.payload;
-      state.error = null;
-    },
-    [addTask.fulfilled](state, action) {
-      state.isLoading = false;
-      state.error = null;
-      state.items.push(action.payload);
-      addToast();
-    },
-    [deleteTask.fulfilled](state, action) {
-      state.isLoading = false;
-      state.error = null;
-      const index = state.items.findIndex(
-        task => task.id === action.payload.id
-      );
-      state.items.splice(index, 1);
-      deletedToast();
-    },
-    [toggleCompleted.fulfilled](state, action) {
-      state.isLoading = false;
-      state.error = null;
-      const index = state.items.findIndex(
-        task => task.id === action.payload.id
-      );
-      state.items.splice(index, 1, action.payload);
-    },
-  },
+  extraReducers: builder =>
+    builder
+      .addCase(fetchTasks.fulfilled, reducer.fetchTaskFulfilled)
+      .addCase(addTask.fulfilled, reducer.addTaskFulfilled)
+      .addCase(deleteTask.fulfilled, reducer.deleteTaskFulfilled)
+      .addCase(toggleCompleted.fulfilled, reducer.toggleCompletedFulfilled)
+
+      .addMatcher(isAnyOf(...getActions('pending')), reducer.anyPending)
+      .addMatcher(isAnyOf(...getActions('fulfilled')), reducer.anyFulfilled)
+      .addMatcher(isAnyOf(...getActions('rejected')), reducer.anyRejected),
 });
 
 export const tasksReducer = tasksSlice.reducer;
-
-function addToast() {
-  return toast.success(`Task successfully added!`, {
-    style: {
-      border: '1px solid green',
-      padding: '16px',
-      color: 'green',
-    },
-  });
-}
-
-function deletedToast() {
-  return toast.success('Task deleted!', {
-    style: {
-      border: '1px solid #713200',
-      padding: '16px',
-      color: '#713200',
-    },
-    iconTheme: {
-      primary: '#713200',
-      secondary: '#FFFAEE',
-    },
-  });
-}
